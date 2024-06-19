@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>D'Hondt Method</title>
+
+  <style>
+    .container {
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .input-section {
+      width: 66%;
+      padding-right: 20px;
+    }
+
+    .explainer-section {
+      width: 34%;
+      color: black;
+    }
+
+    body {
+      font-family: sans-serif;
+      color: white;
+      font-size: larger;
+      background-color: #333;
+    }
+
+    .party {
+      color: white;
+      padding: 15px;
+      border: #AAA 3px solid;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      margin-top: 15px;
+    }
+
+    .party-textbox {
+      width: 40px;
+      margin-right: 20px;
+      padding: 5px;
+      font-size: larger;
+    }
+
+    .party-name {
+      display: inline-block;
+      width: 200px;
+      text-align: center;
+    }
+
+    .winner {
+      background-color: white;
+      color: black;
+      border: green 2px solid;
+    }
+
+    .loser {
+      background-color: grey;
+      opacity: 0%;
+    }
+
+    .party-slider {
+      -webkit-appearance: none;
+      width: 25%;
+      height: 25px;
+      border-radius: 5px;
+      background: #d3d3d3;
+      outline: none;
+      opacity: 0.7;
+      -webkit-transition: .2s;
+      transition: opacity .2s;
+    }
+
+    table {
+      background: lightgrey;
+      border: black;
+      border-collapse: collapse;
+      margin: 20px 0;
+    }
+
+    th,
+    td {
+      border: 1px solid black;
+      padding: 8px;
+      text-align: left;
+    }
+
+    input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      border: 1px solid #000000;
+      height: 36px;
+      width: 16px;
+      border-radius: 3px;
+      background: #ffffff;
+      cursor: pointer;
+      box-shadow: 1px 1px 1px #000000, 0px 0px 1px #0d0d0d;
+    }
+
+    .party-seat-container {
+      display: flex;
+      justify-content: space-between;
+      width: 50%;
+      margin-left: auto;
+    }
+
+    .party-seat {
+      padding: 5px 15px;
+      margin: 5px;
+      border: #AAA 1px solid;
+      flex-grow: 1;
+      text-align: center;
+    }
+
+    .reset-button {
+      margin-left: 20px;
+      padding: 10px 20px;
+      background-color: red;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    .reset-button:hover {
+      background-color: darkred;
+    }
+
+    .round-button {
+      margin: 5px;
+      padding: 10px;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    .round-button:hover {
+      background-color: #0056b3;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="app">
+    {{ message }}
+    <div class="container">
+      <section class="input-section">
+        <div v-for="(party, index) in parties" :style="{ background:party.backgroundCSS}" class="party">
+          <span class="party-name">{{party.name}}</span>
+          <input type="text" v-model.number="party.value" class="party-textbox" />
+          <input type="range" v-model.number="party.value" min="0" max="100" class="party-slider" />
+          <div class="party-seat-container" v-if="party.seats">
+            <span v-for="(seat, index) in party.seats" :class="{'winner': seat === true, 'loser': seat !== true}"
+              class="party-seat">{{ index + 1 }}</span>
+            <button v-if="index == parties.length - 1" @click="resetVotes" class="reset-button">reset</button>
+          </div>
+        </div>
+      </section>
+      <section class="explainer-section">
+        <div>
+          <button v-for="round in 7" @click="showRoundDetails(round - 1)" class="round-button">{{ round - 1 }}</button>
+        </div>
+        <h2>{{ selectedRound !== null ? `Round ${selectedRound + 1}`: 'Who wins?' }}</h2>
+        <div v-if="selectedRound !== null">
+          <table>
+            <thead>
+              <tr>
+                <th>Party</th>
+                <th>Vote</th>
+                <th>Divisor</th>
+                <th>Quotient</th>
+                <th>Result</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="(party, index) in parties.slice(0, -1)" :key="index">
+                <td>{{ party.name }}</td>
+                <td>{{ roundDetails[selectedRound][index].originalVote }}</td>
+                <td>1 + {{ roundDetails[selectedRound][index].divisor - 1 }}</td>
+                <td>{{ roundDetails[selectedRound][index].reducedVote.toFixed(2) }}</td>
+                <td>{{ roundDetails[selectedRound][index].seat ? '✅' : '❌' }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <script src="./js/vue.global.js"></script>
+  <script>
+    const { createApp, ref, reactive, watch } = Vue;
+
+    createApp({
+      setup() {
+        const parties = ref([
+          {
+            name: 'Red',
+            backgroundCSS: 'red',
+            value: 30,
+            seats: Array(6).fill(false)
+          },
+          {
+            name: 'Blue',
+            backgroundCSS: 'blue',
+            value: 20,
+            seats: Array(6).fill(false)
+          },
+          {
+            name: 'Red/White/Green',
+            backgroundCSS: 'linear-gradient(to bottom, white 0, white 25%, red 25%, red 75%, green 75%, green 100%)',
+            value: 10,
+            seats: Array(6).fill(false)
+          },
+          {
+            name: 'Green',
+            backgroundCSS: 'green',
+            value: 10,
+            seats: Array(6).fill(false)
+          },
+          {
+            name: 'Yellow',
+            backgroundCSS: 'yellow',
+            value: 0,
+            seats: Array(6).fill(false)
+          },
+          {
+            name: 'Brown',
+            backgroundCSS: 'brown',
+            value: 0,
+            seats: Array(6).fill(false)
+          },
+          {
+            name: 'No Vote',
+            backgroundCSS: 'black',
+            value: 0,
+            seats: []
+          }
+        ]);
+
+        let previousParties = JSON.parse(JSON.stringify(parties.value));
+        const roundDetails = reactive(Array(6).fill(null).map(() => Array(parties.value.length - 1).fill({ originalVote: 0, divisor: 0, reducedVote: 0, seat: false })));
+        const selectedRound = ref(null);
+
+        const adjust = (lastChangedIndex) => {
+          const voteCount = parties.value.slice(0, -1).reduce((acc, party) => {
+            return acc + party.value;
+          }, 0);
+
+          if (voteCount > 100) {
+            const diff = voteCount - 100;
+            parties.value[lastChangedIndex].value -= diff;
+            parties.value[parties.value.length - 1].value = 0;
+          } else {
+            const remainder = 100 - voteCount;
+            parties.value[parties.value.length - 1].value = remainder;
+          }
+        }
+
+        const calculateRounds = (upToRound) => {
+          const validParties = parties.value.slice(0, -1); // Exclude 'No Vote'
+          const votes = validParties.map(party => party.value);
+          const seats = Array(validParties.length).fill(0);
+
+          // Clear previous seat allocations
+          validParties.forEach(party => party.seats.fill(false));
+
+          for (let i = 0; i <= upToRound; i++) {
+            const quotients = votes.map((vote, index) => vote / (seats[index] + 1));
+            const maxIndex = quotients.indexOf(Math.max(...quotients));
+
+            // Save round details before updating the divisor
+            validParties.forEach((party, partyIndex) => {
+              roundDetails[i][partyIndex] = {
+                originalVote: votes[partyIndex] * (seats[partyIndex] + 1),
+                divisor: seats[partyIndex] + 1,
+                reducedVote: votes[partyIndex],
+                seat: maxIndex === partyIndex
+              };
+            });
+
+            // Allocate the seat
+            seats[maxIndex]++;
+            votes[maxIndex] = parties.value[maxIndex].value / (seats[maxIndex] + 1);
+
+            // Update the seat allocation for visual representation
+            validParties[maxIndex].seats[i] = true;
+          }
+        }
+
+        const showRoundDetails = (round) => {
+          if (round === 0) {
+            // Clear all seats
+            parties.value.forEach(party => party.seats.fill(false));
+            selectedRound.value = null;
+          } else {
+            selectedRound.value = round - 1;
+            calculateRounds(round - 1);
+          }
+        }
+
+        const resetVotes = () => {
+          parties.value.forEach((party, index) => {
+            if (index < parties.value.length - 1) {
+              party.value = 0;
+              party.seats = Array(6).fill(false);
+            } else {
+              party.value = 100;
+            }
+          });
+          roundDetails.forEach((round, roundIndex) => {
+            round.forEach((detail, partyIndex) => {
+              roundDetails[roundIndex][partyIndex] = { originalVote: 0, divisor: 0, reducedVote: 0, seat: false };
+            });
+          });
+          selectedRound.value = null;
+        }
+
+        watch(() => parties.value, (newParties) => {
+          newParties.forEach((party, index) => {
+            if (party.value != previousParties[index].value) {
+              adjust(index);
+            }
+          });
+          previousParties = JSON.parse(JSON.stringify(parties.value));
+        }, { deep: true });
+
+        const formatNumber = (number) => {
+          return number.toFixed(2);
+        }
+
+        return { parties, resetVotes, showRoundDetails, selectedRound, roundDetails, formatNumber };
+      },
+      data() {
+        return {
+          message: "D'Hondt Explainer"
+        };
+      }
+    }).mount('#app')
+  </script>
+</body>
+
+</html>
