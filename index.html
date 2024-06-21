@@ -155,18 +155,20 @@
           <input type="text" v-model.number="party.value" class="party-textbox" />
           <input type="range" v-model.number="party.value" min="0" max="100" class="party-slider" />
           <div class="party-seat-container" v-if="party.seats">
-            <span v-for="(seat, index) in party.seats" :class="{'winner': seat === true, 'loser': seat !== true}"
-              class="party-seat">{{ index + 1 }}</span>
+            <span v-for="(seat, index) in party.seats"
+              :class="{'winner': seat === true  && index < selectedRound, 'loser': !(seat === true  && index < selectedRound)}"
+              class="party-seat">{{
+              index + 1 }}</span>
             <button v-if="index == parties.length - 1" @click="resetVotes" class="reset-button">reset</button>
           </div>
         </div>
       </section>
       <section class="explainer-section">
         <div>
-          <button v-for="round in 7" @click="showRoundDetails(round - 1)" class="round-button">{{ round - 1 }}</button>
+          <button v-for="round in 7" @click="changeRound(round - 1)" class="round-button">{{ round - 1 }}</button>
         </div>
-        <h2>{{ selectedRound !== null ? `Round ${selectedRound + 1}`: 'Who wins?' }}</h2>
-        <div v-if="selectedRound !== null">
+        <h2>{{ selectedRound !== 0 ? `Round ${selectedRound}`: 'Who wins?' }}</h2>
+        <div v-if="selectedRound !== 0">
           <table>
             <thead>
               <tr>
@@ -180,10 +182,10 @@
             <tbody>
               <tr v-for="(party, index) in parties.slice(0, -1)" :key="index">
                 <td>{{ party.name }}</td>
-                <td>{{ roundDetails[selectedRound][index].originalVote }}</td>
-                <td>1 + {{ roundDetails[selectedRound][index].divisor - 1 }}</td>
-                <td>{{ roundDetails[selectedRound][index].reducedVote.toFixed(2) }}</td>
-                <td>{{ roundDetails[selectedRound][index].seat ? '✅' : '❌' }}</td>
+                <td>{{ party.value }}</td>
+                <td>1 + {{ seatCount(party, selectedRound -1) }}</td>
+                <td>{{ party.value / (1 + seatCount(party, selectedRound -1)).toFixed(2) }}</td>
+                <td>{{ party.seats[selectedRound -1] ? '✅' : '❌' }}</td>
               </tr>
             </tbody>
           </table>
@@ -245,7 +247,8 @@
 
         let previousParties = JSON.parse(JSON.stringify(parties.value));
         const roundDetails = reactive(Array(6).fill(null).map(() => Array(parties.value.length - 1).fill({ originalVote: 0, divisor: 0, reducedVote: 0, seat: false })));
-        const selectedRound = ref(null);
+        const selectedRound = ref(0);
+
 
         const adjust = (lastChangedIndex) => {
           const voteCount = parties.value.slice(0, -1).reduce((acc, party) => {
@@ -260,48 +263,34 @@
             const remainder = 100 - voteCount;
             parties.value[parties.value.length - 1].value = remainder;
           }
+          calculateRounds(6);
+        }
+
+        const seatCount = (party, round) => {
+          return party.seats.filter((seat, index) => seat && index < round).length;
         }
 
         const calculateRounds = (upToRound) => {
           const validParties = parties.value.slice(0, -1); // Exclude 'No Vote'
-          const votes = validParties.map(party => party.value);
-          const seats = Array(validParties.length).fill(0);
-
-          // Clear previous seat allocations
           validParties.forEach(party => party.seats.fill(false));
 
           for (let i = 0; i <= upToRound; i++) {
-            const quotients = votes.map((vote, index) => vote / (seats[index] + 1));
+            const quotients = validParties.map((party, index) => {
+              const seatCount = party.seats.filter(seat => seat).length;
+              return party.value / (seatCount + 1);
+            });
             const maxIndex = quotients.indexOf(Math.max(...quotients));
 
-            // Save round details before updating the divisor
-            validParties.forEach((party, partyIndex) => {
-              roundDetails[i][partyIndex] = {
-                originalVote: votes[partyIndex] * (seats[partyIndex] + 1),
-                divisor: seats[partyIndex] + 1,
-                reducedVote: votes[partyIndex],
-                seat: maxIndex === partyIndex
-              };
-            });
-
-            // Allocate the seat
-            seats[maxIndex]++;
-            votes[maxIndex] = parties.value[maxIndex].value / (seats[maxIndex] + 1);
-
-            // Update the seat allocation for visual representation
             validParties[maxIndex].seats[i] = true;
           }
         }
 
-        const showRoundDetails = (round) => {
-          if (round === 0) {
-            // Clear all seats
-            parties.value.forEach(party => party.seats.fill(false));
-            selectedRound.value = null;
-          } else {
-            selectedRound.value = round - 1;
-            calculateRounds(round - 1);
-          }
+        const changeRound = (round) => {
+          // if (round === 0) {
+          selectedRound.value = round;
+          // } else {
+          //   selectedRound.value = round - 1;
+          // }
         }
 
         const resetVotes = () => {
@@ -312,11 +301,6 @@
             } else {
               party.value = 100;
             }
-          });
-          roundDetails.forEach((round, roundIndex) => {
-            round.forEach((detail, partyIndex) => {
-              roundDetails[roundIndex][partyIndex] = { originalVote: 0, divisor: 0, reducedVote: 0, seat: false };
-            });
           });
           selectedRound.value = null;
         }
@@ -334,7 +318,11 @@
           return number.toFixed(2);
         }
 
-        return { parties, resetVotes, showRoundDetails, selectedRound, roundDetails, formatNumber };
+        //initalise
+        calculateRounds(6);
+
+
+        return { parties, resetVotes, changeRound, selectedRound, roundDetails, formatNumber, seatCount };
       },
       data() {
         return {
