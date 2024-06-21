@@ -152,7 +152,8 @@
       <section class="input-section">
         <div v-for="(party, index) in parties" :style="{ background:party.backgroundCSS}" class="party">
           <span class="party-name">{{party.name}}</span>
-          <input type="text" v-model.number="party.value" class="party-textbox" />
+          <input type="text" v-model.number="party.value" @input="validateInput(index)" @blur="sanitizeInput(index)"
+            class="party-textbox" />
           <input type="range" v-model.number="party.value" min="0" max="100" class="party-slider" />
           <div class="party-seat-container" v-if="party.seats">
             <span v-for="(seat, index) in party.seats"
@@ -184,7 +185,7 @@
                 <td>{{ party.name }}</td>
                 <td>{{ party.value }}</td>
                 <td>1 + {{ seatCount(party, selectedRound -1) }}</td>
-                <td>{{ party.value / (1 + seatCount(party, selectedRound -1)).toFixed(2) }}</td>
+                <td>{{ (party.value / (1 + seatCount(party, selectedRound -1))).toFixed(2) }}</td>
                 <td>{{ party.seats[selectedRound -1] ? '✅' : '❌' }}</td>
               </tr>
             </tbody>
@@ -286,11 +287,7 @@
         }
 
         const changeRound = (round) => {
-          // if (round === 0) {
           selectedRound.value = round;
-          // } else {
-          //   selectedRound.value = round - 1;
-          // }
         }
 
         const resetVotes = () => {
@@ -304,6 +301,19 @@
           });
           selectedRound.value = null;
         }
+
+        const validateInput = (index) => {
+          const value = parties.value[index].value;
+          if (isNaN(value) || value < 0 || value > 100) {
+            parties.value[index].value = Math.max(0, Math.min(100, value));
+          }
+        };
+
+        const sanitizeInput = (index) => {
+          if (isNaN(parties.value[index].value)) {
+            parties.value[index].value = 0;
+          }
+        };
 
         watch(() => parties.value, (newParties) => {
           newParties.forEach((party, index) => {
@@ -322,7 +332,7 @@
         calculateRounds(6);
 
 
-        return { parties, resetVotes, changeRound, selectedRound, roundDetails, formatNumber, seatCount };
+        return { parties, resetVotes, changeRound, validateInput, sanitizeInput, selectedRound, roundDetails, formatNumber, seatCount };
       },
       data() {
         return {
