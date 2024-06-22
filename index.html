@@ -12,7 +12,7 @@
       justify-content: space-between;
     }
 
-    .input-section {
+    .tile {
       width: 66%;
       padding-right: 20px;
     }
@@ -26,7 +26,7 @@
       font-family: sans-serif;
       color: white;
       font-size: larger;
-      background-color: #333;
+      background-color: #aaa;
     }
 
     .party {
@@ -53,10 +53,17 @@
     }
 
     .winner {
-      background-color: white;
-      color: black;
-      border: green 2px solid;
+      background-color: #666;
+      color: white;
+      border: #AAA 1px solid;
     }
+
+    .winner.active {
+      background-color: #333;
+      color: white;
+      border: #AAA 1px solid;
+    }
+
 
     .loser {
       background-color: grey;
@@ -76,17 +83,18 @@
     }
 
     table {
-      background: lightgrey;
-      border: black;
+      /* background: lightgrey; */
+      width: 100%;
+      border: #666;
       border-collapse: collapse;
-      margin: 20px 0;
+      /* margin: 20px 0; */
     }
 
     th,
     td {
-      border: 1px solid black;
+      border: 1px solid #666;
       padding: 8px;
-      text-align: left;
+      text-align: center;
     }
 
     input[type=range]::-webkit-slider-thumb {
@@ -100,17 +108,27 @@
       box-shadow: 1px 1px 1px #000000, 0px 0px 1px #0d0d0d;
     }
 
-    .party-seat-container {
+    .explanation-header-right {
+      display: flex;
+      justify-content: space-between;
+      /* width: 50%; */
+      height: 100%;
+      margin-left: auto;
+      float: right;
+    }
+
+    .tile-header-right {
       display: flex;
       justify-content: space-between;
       width: 50%;
+      height: 100%;
       margin-left: auto;
+      float: right;
     }
 
     .party-seat {
       padding: 5px 15px;
       margin: 5px;
-      border: #AAA 1px solid;
       flex-grow: 1;
       text-align: center;
     }
@@ -130,58 +148,110 @@
     }
 
     .round-button {
-      margin: 5px;
-      padding: 10px;
-      background-color: #007bff;
+      background-color: #666;
       color: white;
-      border: none;
-      border-radius: 5px;
+      border-radius: 10px 10px 0 0;
       cursor: pointer;
+      /* padding: 10px 15px; */
+      height: 100%;
+      width: auto;
+      color: white;
+      border: #AAA 1px solid;
+      border-bottom: none;
+      text-align: center;
+      position: relative;
+      z-index: 1;
+      font-size: larger;
+      flex-grow: 1;
     }
 
     .round-button:hover {
-      background-color: #0056b3;
+      background-color: #555;
+    }
+
+    .round-button.active {
+      background-color: #333;
+      /* border: #AAA 1px solid;
+      border-bottom: none; */
+      z-index: 2;
+      position: relative;
+    }
+
+    .round-button-container {
+      display: flex;
+      align-items: flex-end;
+      margin-bottom: -1px;
+      /* Hide the bottom border of the active tab */
+    }
+
+    .tile-header-name {
+      color: #333;
+      font-size: xx-large;
+      float: left;
+    }
+
+    .tile-header {
+      padding-right: 25px;
+      padding-left: 25px;
+      height: 40px;
+    }
+
+    .tile-body {
+      background: #333;
+      padding: 20px;
+      border-radius: 15px;
+      height: 100%;
+      display: grid;
     }
   </style>
 </head>
 
 <body>
   <div id="app">
-    {{ message }}
     <div class="container">
-      <section class="input-section">
-        <div v-for="(party, index) in parties" :style="{ background:party.backgroundCSS}" class="party">
-          <span class="party-name">{{party.name}}</span>
-          <input type="text" v-model.number="party.value" @input="validateInput(index)" @blur="sanitizeInput(index)"
-            class="party-textbox" />
-          <input type="range" v-model.number="party.value" min="0" max="100" class="party-slider" />
-          <div class="party-seat-container" v-if="party.seats">
-            <span v-for="(seat, index) in party.seats"
-              :class="{'winner': seat === true  && index < selectedRound, 'loser': !(seat === true  && index < selectedRound)}"
-              class="party-seat">{{
-              index + 1 }}</span>
-            <button v-if="index == parties.length - 1" @click="resetVotes" class="reset-button">reset</button>
+      <section class="tile">
+        <div class="tile-header">
+          <div class="tile-header-name">D'Hondt Method</div>
+          <div class="tile-header-right">
+            <button v-for="(_,round) in 7" @click="changeRound(round)"
+              :class="['round-button', { active: round === selectedRound }]">{{ round }}</button>
+          </div>
+        </div>
+        <div class="tile-body">
+          <div v-for="(party, index) in parties" :style="{ background:party.backgroundCSS}" class="party">
+            <span class="party-name">{{party.name}}</span>
+            <input type="text" v-model.number="party.value" @input="validateInput(index)" @blur="sanitizeInput(index)"
+              class="party-textbox" />
+            <input type="range" v-model.number="party.value" min="0" max="100" class="party-slider" />
+            <div class="tile-header-right" v-if="party.seats">
+              <span class="party-seat"> </span>
+              <span v-for="(seat, index) in party.seats"
+                :class="['party-seat', {'winner': seat === true  && index < selectedRound, 'loser': !(seat === true  && index < selectedRound), 'active': (index == selectedRound - 1)}]">{{
+                index + 1 }}</span>
+              <button v-if="index == parties.length - 1" @click="resetVotes" class="reset-button">reset</button>
+            </div>
           </div>
         </div>
       </section>
-      <section class="explainer-section">
-        <div>
-          <button v-for="round in 7" @click="changeRound(round - 1)" class="round-button">{{ round - 1 }}</button>
+      <section class="tile">
+        <div class="tile-header">
+          <div class="tile-header-name">Explanation (Round {{selectedRound}})</div>
+          <div class="explanation-header-right">CY / EN</div>
         </div>
-        <h2>{{ selectedRound !== 0 ? `Round ${selectedRound}`: 'Who wins?' }}</h2>
-        <div v-if="selectedRound !== 0">
+
+        <div v-if="selectedRound !== 0" class="tile-body">
           <table>
             <thead>
               <tr>
                 <th>Party</th>
-                <th>Vote</th>
+                <th>Vote %</th>
                 <th>Divisor</th>
                 <th>Quotient</th>
                 <th>Result</th>
               </tr>
             </thead>
             <tbody>
-              <tr v-for="(party, index) in parties.slice(0, -1)" :key="index">
+              <tr v-for="(party, index) in parties" :key="index">
                 <td>{{ party.name }}</td>
                 <td>{{ party.value }}</td>
                 <td>1 + {{ seatCount(party, selectedRound -1) }}</td>
@@ -334,11 +404,6 @@
 
         return { parties, resetVotes, changeRound, validateInput, sanitizeInput, selectedRound, roundDetails, formatNumber, seatCount };
       },
-      data() {
-        return {
-          message: "D'Hondt Explainer"
-        };
-      }
     }).mount('#app')
   </script>
 </body>
