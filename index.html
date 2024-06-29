@@ -9,11 +9,11 @@
   <style>
     .container {
       display: flex;
-      justify-content: space-between;
+      justify-content: space-evenly;
     }
 
     .tile {
-      width: 66%;
+      max-width: 50%;
       padding-right: 20px;
     }
 
@@ -42,15 +42,25 @@
 
     .party-textbox {
       width: 40px;
+      height: 20px;
       margin-right: 20px;
       padding: 5px;
       font-size: larger;
+      color: #444;
     }
 
     .party-name {
       display: inline-block;
-      width: 200px;
+      /* width: 200px; */
       text-align: center;
+      color: #666;
+    }
+
+    .party-inputs {
+      width: 100%;
+      text-align: center;
+      display: flex;
+      align-items: center;
     }
 
     .winner {
@@ -73,7 +83,6 @@
 
     .party-slider {
       -webkit-appearance: none;
-      width: 25%;
       height: 25px;
       border-radius: 5px;
       background: #d3d3d3;
@@ -81,6 +90,8 @@
       opacity: 0.7;
       -webkit-transition: .2s;
       transition: opacity .2s;
+      flex: 1 1 auto;
+      /* Grow to take up remaining space */
     }
 
     table {
@@ -118,13 +129,23 @@
       float: right;
     }
 
-    .tile-header-right {
+    .tile-right {
       display: flex;
       justify-content: space-between;
       width: 50%;
       height: 100%;
       margin-left: auto;
       float: right;
+    }
+
+    .tile-left {
+      display: flex;
+      justify-content: space-between;
+      width: 50%;
+      height: 100%;
+      margin-left: auto;
+      float: right;
+      /* flex-direction: column; */
     }
 
     .party-seat {
@@ -205,6 +226,7 @@
       padding: 20px;
       border-radius: 15px;
       height: 100%;
+      width: 100%;
       display: flex;
       float: left;
       flex-direction: column;
@@ -218,18 +240,22 @@
       <section class="tile">
         <div class="tile-header">
           <div class="tile-header-name">D'Hondt Method</div>
-          <div class="tile-header-right">
+          <div class="tile-right">
             <button v-for="(_,round) in 7" @click="changeRound(round)"
               :class="['round-button', { active: round === selectedRound }]">{{ round }}</button>
           </div>
         </div>
         <div class="tile-body">
           <div v-for="(party, index) in parties" :style="{ background:party.backgroundCSS}" class="party">
-            <span class="party-name">{{party.name}}</span>
-            <input type="text" v-model.number="party.value" @input="validateInput(index)" @blur="sanitizeInput(index)"
-              class="party-textbox" />
-            <input type="range" v-model.number="party.value" min="0" max="100" class="party-slider" />
-            <div class="tile-header-right" v-if="party.seats">
+            <div class="tile-left">
+              <!-- <span class="party-name">{{party.name}}</span> -->
+              <div class="party-inputs">
+                <input type="text" v-model.number="party.value" @input="validateInput(index)"
+                  @blur="sanitizeInput(index)" class="party-textbox" />
+                <input type="range" v-model.number="party.value" min="0" max="100" class="party-slider" />
+              </div>
+            </div>
+            <div class="tile-right" v-if="party.seats">
               <span class="party-seat"> </span>
               <span v-for="(seat, index) in party.seats"
                 :class="['party-seat', {'winner': seat === true  && index < selectedRound, 'loser': !(seat === true  && index < selectedRound), 'active': (index == selectedRound - 1)}]">{{
