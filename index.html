@@ -37,6 +37,7 @@
       display: flex;
       align-items: center;
       margin-top: 15px;
+      flex-grow: 1;
     }
 
     .party-textbox {
@@ -201,7 +202,8 @@
       padding: 20px;
       border-radius: 15px;
       height: 100%;
-      display: grid;
+      display: flex;
+      flex-direction: column;
     }
   </style>
 </head>
@@ -369,7 +371,7 @@
               party.value = 100;
             }
           });
-          selectedRound.value = null;
+          selectedRound.value = 0;
         }
 
         const validateInput = (index) => {
