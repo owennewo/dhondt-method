@@ -132,6 +132,9 @@
       margin: 5px;
       flex-grow: 1;
       text-align: center;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
 
     .reset-button {
@@ -203,6 +206,7 @@
       border-radius: 15px;
       height: 100%;
       display: flex;
+      float: left;
       flex-direction: column;
     }
   </style>
@@ -246,19 +250,19 @@
             <thead>
               <tr>
                 <th>Party</th>
+                <th>Result</th>
                 <th>Vote %</th>
                 <th>Divisor</th>
                 <th>Quotient</th>
-                <th>Result</th>
               </tr>
             </thead>
             <tbody>
               <tr v-for="(party, index) in parties" :key="index">
                 <td>{{ party.name }}</td>
+                <td>{{ party.seats[selectedRound -1] ? '✅' : '❌' }}</td>
                 <td>{{ party.value }}</td>
                 <td>1 + {{ seatCount(party, selectedRound -1) }}</td>
                 <td>{{ (party.value / (1 + seatCount(party, selectedRound -1))).toFixed(2) }}</td>
-                <td>{{ party.seats[selectedRound -1] ? '✅' : '❌' }}</td>
               </tr>
             </tbody>
           </table>
