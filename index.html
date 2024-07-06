@@ -4,30 +4,48 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>D'Hondt Method</title>
+  <title>D'Hondt</title>
 
   <style>
-    .container {
-      display: flex;
-      justify-content: space-evenly;
-    }
-
-    .tile {
-      width: 45%;
-      padding-right: 20px;
-      /* height: 100%; */
-    }
-
-    .explainer-section {
-      width: 34%;
-      color: black;
-    }
-
     body {
       font-family: sans-serif;
       color: white;
       font-size: larger;
       background-color: #aaa;
+      margin: 0;
+      padding: 0;
+    }
+
+    .container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px;
+    }
+
+    .tile {
+      width: 100%;
+      max-width: 800px;
+      padding: 10px;
+      box-sizing: border-box;
+    }
+
+    .quotient {
+      display: flex;
+      justify-content: space-between;
+      margin: 5px;
+      flex-direction: column;
+      background-color: #444;
+      border: #CCC 1px solid;
+      border-radius: 8px;
+      margin-left: 10px;
+      padding: 4px;
+      color: #CCC;
+    }
+
+    .quotient-explain {
+      color: #999;
+      font-size: small;
     }
 
     .party {
@@ -37,28 +55,28 @@
       border-radius: 10px;
       display: flex;
       align-items: center;
-      margin-top: 15px;
+      margin-bottom: 15px;
       flex-grow: 1;
+      flex-wrap: wrap;
+      row-gap: 5px;
     }
 
     .party-textbox {
-      width: 40px;
-      height: 20px;
-      margin-right: 20px;
+      width: 50px;
+      margin-right: 10px;
       padding: 5px;
-      font-size: larger;
+      font-size: 20px;
       color: #444;
     }
 
     .party-name {
       display: inline-block;
-      /* width: 200px; */
       text-align: center;
       color: #666;
     }
 
-    .party-inputs {
-      width: 100%;
+    .tile-left {
+      width: 50%;
       text-align: center;
       display: flex;
       align-items: center;
@@ -76,7 +94,6 @@
       border: #AAA 1px solid;
     }
 
-
     .loser {
       background-color: grey;
       opacity: 0%;
@@ -91,23 +108,7 @@
       opacity: 0.7;
       -webkit-transition: .2s;
       transition: opacity .2s;
-      flex: 1 1 auto;
-      /* Grow to take up remaining space */
-    }
-
-    table {
-      /* background: lightgrey; */
-      width: 100%;
-      border: #666;
-      border-collapse: collapse;
-      /* margin: 20px 0; */
-    }
-
-    th,
-    td {
-      border: 1px solid #666;
-      padding: 8px;
-      text-align: center;
+      flex-grow: 1;
     }
 
     input[type=range]::-webkit-slider-thumb {
@@ -121,36 +122,28 @@
       box-shadow: 1px 1px 1px #000000, 0px 0px 1px #0d0d0d;
     }
 
-    .explanation-header-right {
-      display: flex;
-      justify-content: space-between;
-      /* width: 50%; */
-      height: 100%;
-      margin-left: auto;
-      float: right;
+    table {
+      width: 100%;
+      border: #666;
+      border-collapse: collapse;
+    }
+
+    th,
+    td {
+      border: 1px solid #666;
+      padding: 8px;
+      text-align: center;
     }
 
     .tile-right {
+      width: 50%;
       display: flex;
       justify-content: space-between;
-      width: 50%;
-      height: 100%;
       margin-left: auto;
       float: right;
-    }
-
-    .tile-left {
-      display: flex;
-      justify-content: space-between;
-      width: 50%;
-      height: 100%;
-      margin-left: auto;
-      float: right;
-      /* flex-direction: column; */
     }
 
     .party-seat {
-      /* padding: 5px 15px; */
       margin: 2px;
       flex-grow: 1;
       text-align: center;
@@ -178,18 +171,19 @@
       color: white;
       border-radius: 10px 10px 0 0;
       cursor: pointer;
-      /* padding: 10px 15px; */
       height: 100%;
-      width: auto;
-      color: white;
-      border: #AAA 1px solid;
+      border: 0px;
       border-bottom: none;
       text-align: center;
       position: relative;
       z-index: 1;
       font-size: larger;
       flex-grow: 1;
+      margin-right: 1px;
+      padding: 6px;
+      line-height: 1;
     }
+
 
     .round-button:hover {
       background-color: #555;
@@ -197,29 +191,33 @@
 
     .round-button.active {
       background-color: #333;
-      /* border: #AAA 1px solid;
-      border-bottom: none; */
       z-index: 2;
       position: relative;
+      padding: 8px;
     }
 
     .round-button-container {
       display: flex;
-      align-items: flex-end;
-      margin-bottom: -1px;
-      /* Hide the bottom border of the active tab */
+      flex-grow: 1;
+      align-items: end;
+      gap: 2px;
+
     }
 
     .tile-header-name {
       color: #333;
       font-size: xx-large;
       float: left;
+      margin-right: 20px;
     }
 
     .tile-header {
-      padding-right: 25px;
-      padding-left: 25px;
+      padding-right: 20px;
+      padding-left: 20px;
       height: 40px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
     }
 
     .tile-body {
@@ -227,10 +225,47 @@
       padding: 20px;
       border-radius: 15px;
       height: 100%;
-      width: 100%;
+      /* width: 100%; */
       display: flex;
-      float: left;
       flex-direction: column;
+    }
+
+    @media (max-width: 600px) {
+      .party {
+        flex-direction: column;
+        padding: 8px;
+      }
+
+      .tile-header-name {
+        font-size: large;
+      }
+
+      .tile-left {
+        width: 100%;
+      }
+
+      .tile-right {
+        width: 100%;
+      }
+
+      .container {
+        padding: 0;
+      }
+
+      .tile {
+        padding: 5px;
+      }
+
+      .quotient {
+        flex-direction: row;
+        align-items: baseline;
+        margin: 0;
+      }
+
+      .quotient-explain {
+        margin-left: 10px;
+      }
+
     }
   </style>
 </head>
@@ -240,23 +275,25 @@
     <div class="container">
       <section class="tile">
         <div class="tile-header">
-          <div class="tile-header-name">D'Hondt Method</div>
-          <div class="tile-right">
-            <button v-for="(_,round) in 7" @click="changeRound(round)"
+          <div class="tile-header-name">D'Hondt</div>
+          <div class="round-button-container">
+            <button v-for="(_, round) in 7" @click="changeRound(round)"
               :class="['round-button', { active: round === selectedRound }]">{{ round }}</button>
           </div>
         </div>
         <div class="tile-body">
           <div v-for="(party, index) in parties" :style="{ background:party.backgroundCSS}" class="party">
             <div class="tile-left">
-              <!-- <span class="party-name">{{party.name}}</span> -->
-              <div class="party-inputs">
-                <input type="text" v-model.number="party.value" @input="validateInput(index)"
-                  @blur="sanitizeInput(index)" class="party-textbox" />
-                <input type="range" v-model.number="party.value" min="0" max="100" class="party-slider" />
-              </div>
+              <input type="number" v-model.number="party.value" @input="validateInput(index)"
+                @blur="sanitizeInput(index)" class="party-textbox" />
+              <input type="range" v-model.number="party.value" min="0" max="60" class="party-slider" />
             </div>
             <div class="tile-right" v-if="party.seats">
+              <div class="quotient">
+                <span class="quotient-value">Q={{ (party.value / (1 + seatCount(party, selectedRound))).toFixed(1)
+                  }}</span>
+                <span class="quotient-explain">({{party.value}} / {{ 1 + seatCount(party, selectedRound)}})</span>
+              </div>
               <span class="party-seat"> </span>
               <span v-for="(seat, index) in party.seats"
                 :class="['party-seat', {'winner': seat === true  && index < selectedRound, 'loser': !(seat === true  && index < selectedRound), 'active': (index == selectedRound - 1)}]">{{
@@ -264,35 +301,6 @@
               <button v-if="index == parties.length - 1" @click="resetVotes" class="reset-button">reset</button>
             </div>
           </div>
-        </div>
-      </section>
-      <section class="tile">
-        <div class="tile-header">
-          <div class="tile-header-name">Explanation (Round {{selectedRound}})</div>
-          <div class="explanation-header-right">CY / EN</div>
-        </div>
-
-        <div v-if="selectedRound !== 0" class="tile-body">
-          <table>
-            <thead>
-              <tr>
-                <th>Party</th>
-                <th>Result</th>
-                <th>Vote %</th>
-                <th>Divisor</th>
-                <th>Quotient</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="(party, index) in parties" :key="index">
-                <td>{{ party.name }}</td>
-                <td>{{ party.seats[selectedRound -1] ? '✅' : '❌' }}</td>
-                <td>{{ party.value }}</td>
-                <td>1 + {{ seatCount(party, selectedRound -1) }}</td>
-                <td>{{ (party.value / (1 + seatCount(party, selectedRound -1))).toFixed(2) }}</td>
-              </tr>
-            </tbody>
-          </table>
         </div>
       </section>
     </div>
