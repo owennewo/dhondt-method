@@ -275,7 +275,7 @@
     <div class="container">
       <section class="tile">
         <div class="tile-header">
-          <div class="tile-header-name">D'Hondt</div>
+          <div class="tile-header-name">Rownd</div>
           <div class="round-button-container">
             <button v-for="(_, round) in 7" @click="changeRound(round)"
               :class="['round-button', { active: round === selectedRound }]">{{ round }}</button>
@@ -439,10 +439,7 @@
           return number.toFixed(2);
         }
 
-        //initalise
         calculateRounds(6);
-
-
         return { parties, resetVotes, changeRound, validateInput, sanitizeInput, selectedRound, roundDetails, formatNumber, seatCount };
       },
     }).mount('#app')
